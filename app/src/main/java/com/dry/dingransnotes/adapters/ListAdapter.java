@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.dry.dingransnotes.R;
 import com.dry.dingransnotes.beans.ItemBean;
+import com.google.gson.Gson;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -27,9 +28,10 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>{
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
 
-    public ListAdapter(List<ItemBean> listdata, Context context){
+    public ListAdapter(List<ItemBean> listdata, Context context,SharedPreferences.Editor editor){
         this.listdata = listdata;
         this.context = context;
+        this.editor = editor;
     }
 
     @NonNull
@@ -42,37 +44,43 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ViewHolder>{
 
     @Override
     public void onBindViewHolder(@NonNull ListAdapter.ViewHolder holder, int position) {
-        holder.setData(listdata.get(position));
 
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String name = holder.txt_notename.getText().toString();
-        String description = holder.txt_description.getText().toString();
-        String date = holder.txt_date.getText().toString();
-        String priority = String.valueOf(holder.ckb_priority.isChecked());
+        holder.txt_notename.setText(listdata.get(position).name);
+        holder.txt_description.setText(listdata.get(position).description);
+        holder.txt_date.setText(listdata.get(position).date);
+        holder.ckb_priority.setChecked(listdata.get(position).priority);
 
-        editor = sharedPreferences.edit();
-        editor.putString(String.valueOf(position),name+"::::"+description+"::::"+date+"::::"+priority);
+//        editor = sharedPreferences.edit();
+//        editor.putString(String.valueOf(position),name+"::::"+description+"::::"+date+"::::"+priority);
 //        editor.putString("name:"+position,holder.txt_notename.getText().toString());
 //        editor.putString("description:"+position,holder.txt_description.getText().toString());
 //        editor.putString("date:"+position,holder.txt_date.getText().toString());
 //        editor.putBoolean("priority:"+position,holder.ckb_priority.isChecked());
-        editor.commit();
+//        editor.commit();
 
         holder.ckb_priority.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                String name = holder.txt_notename.getText().toString();
+                String name = listdata.get(position).name;
                 if (isChecked){
+                    listdata.get(position).priority = true;
+                    setSharedPreference();
                     Toast.makeText(context,name + " is high priority", Toast.LENGTH_LONG).show();
-                    editor.putString(String.valueOf(position),name+"::::"+description+"::::"+date+"::::"+priority);
-                    editor.commit();
                 }else{
+                    listdata.get(position).priority = false;
+                    setSharedPreference();
                     Toast.makeText(context,name + " is low priority", Toast.LENGTH_LONG).show();
-                    editor.putString(String.valueOf(position),name+"::::"+description+"::::"+date+"::::"+priority);
-                    editor.commit();
                 }
             }
         });
+    }
+
+
+    public void setSharedPreference(){
+        Gson gson = new Gson();
+        String json = gson.toJson(listdata);
+        editor.putString("notes",json);
+        editor.commit();
     }
 
     @Override
